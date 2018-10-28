@@ -66,9 +66,34 @@ func (l *Lexer) NextToken() token.Token {
 	case '\n':
 		tok = newToken(token.NEWLINE, l.ch)
 		l.readChar()
+	case '*':
+		if l.peekChar() == '*' {
+			l.readChar()
+			tok = token.Token{Type: token.BOLD, Literal: "**"}
+			l.readChar()
+		} else {
+			l.readChar()
+			tok = token.Token{Type: token.ITALIC, Literal: "*"}
+		}
+	case '-':
+		tok = newToken(token.DASH, l.ch)
+		l.readChar()
 	default:
-		tok.Type = token.SENTENCE
-		tok.Literal = l.readSentence()
+		if isDigit(l.ch) {
+			if l.peekChar() == '.' {
+				literal := string(l.ch) + string('.')
+				tok = token.Token{Type: token.OLIST, Literal: literal}
+				l.readChar()
+				l.readChar()
+			} else {
+				tok.Type = token.SENTENCE
+				tok.Literal = l.readSentence()
+			}
+		} else {
+			tok.Type = token.SENTENCE
+			tok.Literal = l.readSentence()
+		}
+
 	}
 	return tok
 }

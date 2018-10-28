@@ -5,8 +5,10 @@ import "markdown_to_html/token"
 
 func TestNextToken(t *testing.T) {
 	input := `# sentence 1 eee
-	## sentent 3 
-	### sentent 4 
+	## sentent **3** 
+	### sentent *4*
+	1. ssss
+	- eeee
 	`
 
 	tests := []struct {
@@ -17,11 +19,22 @@ func TestNextToken(t *testing.T) {
 		{token.SENTENCE, "sentence 1 eee"},
 		{token.NEWLINE, "\n"},
 		{token.HEADER2, "##"},
-		{token.SENTENCE, "sentent 3 "},
+		{token.SENTENCE, "sentent "},
+		{token.BOLD, "**"},
+		{token.SENTENCE, "3"},
+		{token.BOLD, "**"},
 		{token.NEWLINE, "\n"},
 		{token.HEADER3, "###"},
-		{token.SENTENCE, "sentent 4 "},
+		{token.SENTENCE, "sentent "},
+		{token.ITALIC, "*"},
+		{token.SENTENCE, "4"},
+		{token.ITALIC, "*"},
 		{token.NEWLINE, "\n"},
+		{token.OLIST, "1."},
+		{token.SENTENCE, "ssss"},
+		{token.NEWLINE, "\n"},
+		{token.DASH, "-"},
+		{token.SENTENCE, "eeee"},
 	}
 
 	l := New(input)

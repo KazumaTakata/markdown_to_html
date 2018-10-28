@@ -15,4 +15,8 @@ const (
 	HEADER5  = "#####"
 	SENTENCE = "SENTENCE"
 	NEWLINE  = "NEWLINE"
+	BOLD     = "BOLD"
+	ITALIC   = "ITALIC"
+	OLIST    = "OLIST"
+	DASH     = "-"
 )
