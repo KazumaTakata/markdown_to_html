@@ -5,7 +5,7 @@ import "markdown_to_html/token"
 
 func TestNextToken(t *testing.T) {
 	input := `# sentence 1 eee
-	## sentent **3** 
+	## sentent ## **3** 
 	### sentent *4*
 	1. ssss
 	- eeee
@@ -19,7 +19,7 @@ func TestNextToken(t *testing.T) {
 		{token.SENTENCE, "sentence 1 eee"},
 		{token.NEWLINE, "\n"},
 		{token.HEADER2, "##"},
-		{token.SENTENCE, "sentent "},
+		{token.SENTENCE, "sentent ## "},
 		{token.BOLD, "**"},
 		{token.SENTENCE, "3"},
 		{token.BOLD, "**"},

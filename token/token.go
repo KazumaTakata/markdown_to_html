@@ -19,4 +19,6 @@ const (
 	ITALIC   = "ITALIC"
 	OLIST    = "OLIST"
 	DASH     = "-"
+	EOF      = "EOF"
+	PARA     = "PARA"
 )

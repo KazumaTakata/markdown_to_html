@@ -16,7 +16,7 @@ type Lexer struct {
 }
 
 func (l *Lexer) readChar() {
-	if l.readPosition > len(l.input) {
+	if l.readPosition >= len(l.input) {
 		l.ch = 0
 	} else {
 		l.ch = l.input[l.readPosition]
@@ -78,6 +78,9 @@ func (l *Lexer) NextToken() token.Token {
 	case '-':
 		tok = newToken(token.DASH, l.ch)
 		l.readChar()
+	case 0:
+		tok.Literal = ""
+		tok.Type = token.EOF
 	default:
 		if isDigit(l.ch) {
 			if l.peekChar() == '.' {
@@ -133,7 +136,7 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 }
 
 func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == ' '
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == ' ' || ch == '#'
 }
 
 func isDigit(ch byte) bool {
