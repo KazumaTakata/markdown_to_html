@@ -47,6 +47,7 @@ func TestParagraphStatement(t *testing.T) {
 
 	input := `sentence
 	sentece2
+
 	`
 
 	l := lexer.New(input)
@@ -57,26 +58,20 @@ func TestParagraphStatement(t *testing.T) {
 	if program == nil {
 
 	}
-	// if program == nil {
-	// 	t.Fatalf("ParseProgram() returned nil")
-	// }
-	// if len(program.Statements) != 3 {
-	// 	t.Fatalf("Program.Statements does not contain 3 statements. got=%d", len(program.Statements))
-	// }
+}
 
-	// tests := []struct {
-	// 	expectedIdentifier string
-	// }{
-	// 	{"x"},
-	// 	{"y"},
-	// 	{"foobar"},
-	// }
+func TestOrderedList(t *testing.T) {
+	input := `1. sentence
+	2. sentece2
 
-	// for i, tt := range tests {
-	// 	stmt := program.Statements[i]
-	// 	if !testLetStatement(t, stmt, tt.expectedIdentifier) {
-	// 		return
-	// 	}
-	// }
+	`
 
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+
+	if program == nil {
+
+	}
 }

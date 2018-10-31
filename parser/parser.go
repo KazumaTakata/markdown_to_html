@@ -24,12 +24,13 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 
 	for p.curToken.Type != token.EOF {
+		for p.curToken.Type == token.NEWLINE {
+			p.nextToken()
+		}
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
-
-		p.nextToken()
 	}
 	return program
 }
@@ -53,6 +54,10 @@ func (p *Parser) parseStatement() interface{} {
 		return p.parseHeaderStatement()
 	case token.SENTENCE:
 		return p.parseParagraph()
+	case token.OLIST:
+		return p.parseOrderedlist()
+	case token.DASH:
+		return p.parseUnorderedlist()
 	default:
 		return nil
 	}
@@ -60,52 +65,85 @@ func (p *Parser) parseStatement() interface{} {
 
 func (p *Parser) parseHeaderStatement() *ast.HeaderStatement {
 	stmt := &ast.HeaderStatement{Token: p.curToken}
-
+	OSentence := &ast.SentenceOneline{}
 	for !p.expectPeek(token.NEWLINE) {
 		p.nextToken()
 		switch p.curToken.Type {
 		case token.SENTENCE:
-			sentence := ast.Sentence{Token: p.curToken}
-			stmt.Body = append(stmt.Body, sentence)
+			chunk := &ast.NormalChunk{Token: p.curToken}
+			OSentence.Chunks = append(OSentence.Chunks, chunk)
 		case token.BOLD:
 			sentence := p.parseBold()
-			stmt.Body = append(stmt.Body, sentence)
+			OSentence.Chunks = append(OSentence.Chunks, sentence)
 		}
 	}
+	stmt.Sentence = OSentence
+	p.nextToken()
 
+	return stmt
+}
+
+func (p *Parser) parseUnorderedlist() *ast.UnOrderedList {
+	stmt := &ast.UnOrderedList{}
+
+	for p.curToken.Type == token.DASH {
+		stmt.Sentences = append(stmt.Sentences, p.parseOneline())
+	}
+	return stmt
+}
+
+func (p *Parser) parseOrderedlist() *ast.OrderedList {
+	stmt := &ast.OrderedList{}
+
+	for p.curToken.Type == token.OLIST {
+		stmt.Sentences = append(stmt.Sentences, p.parseOneline())
+	}
 	return stmt
 }
 
 func (p *Parser) parseParagraph() *ast.Paragraph {
-	stmt := &ast.Paragraph{Token: token.Token{Type: token.PARA}}
-	sentence := ast.Sentence{Token: p.curToken}
-	stmt.Body = append(stmt.Body, sentence)
+	stmt := &ast.Paragraph{}
 
-	for !p.expectPeek(token.NEWLINE) {
-		p.nextToken()
-		switch p.curToken.Type {
-		case token.SENTENCE:
-			sentence := ast.Sentence{Token: p.curToken}
-			stmt.Body = append(stmt.Body, sentence)
-		case token.BOLD:
-			sentence := p.parseBold()
-			stmt.Body = append(stmt.Body, sentence)
-		}
+	for p.curToken.Type == token.SENTENCE {
+		stmt.Sentences = append(stmt.Sentences, p.parseOneline())
 	}
 
 	return stmt
 }
 
-func (p *Parser) parseBold() *ast.BoldSentence {
-	bold := &ast.BoldSentence{Token: p.curToken}
+func (p *Parser) parseOneline() *ast.SentenceOneline {
+	stmt := &ast.SentenceOneline{}
+	chunk := &ast.BoldChunk{Token: p.curToken}
+	stmt.Chunks = append(stmt.Chunks, chunk)
+
+	for !p.expectPeek(token.NEWLINE) {
+		p.nextToken()
+		switch p.curToken.Type {
+		case token.SENTENCE:
+			chunk := &ast.BoldChunk{Token: p.curToken}
+			stmt.Chunks = append(stmt.Chunks, chunk)
+		case token.BOLD:
+			chunk := p.parseBold()
+			stmt.Chunks = append(stmt.Chunks, chunk)
+		}
+	}
+
+	p.nextToken()
+
+	return stmt
+
+}
+
+func (p *Parser) parseBold() *ast.BoldChunk {
+	bold := &ast.BoldChunk{Token: p.curToken}
 
 	if !p.expectPeek(token.SENTENCE) {
 		log.Fatal("syntax error")
 	}
 
-	sentence := ast.Sentence{Token: p.curToken}
+	chunk := &ast.NormalChunk{Token: p.curToken}
 
-	bold.Sentence = append(bold.Sentence, sentence)
+	bold.Chunk = chunk
 
 	if !p.expectPeek(token.BOLD) {
 		log.Fatal("syntax error")
