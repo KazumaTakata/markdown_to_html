@@ -78,9 +78,27 @@ func (l *Lexer) NextToken() token.Token {
 	case '-':
 		tok = newToken(token.DASH, l.ch)
 		l.readChar()
+	case '`':
+		tok = newToken(token.TICK, l.ch)
+		l.readChar()
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+	case '[':
+		tok = newToken(token.LSQUARE, l.ch)
+		l.readChar()
+	case ']':
+		tok = newToken(token.RSQUARE, l.ch)
+		l.readChar()
+	case '(':
+		tok = newToken(token.LPAREN, l.ch)
+		l.readChar()
+	case ')':
+		tok = newToken(token.RPAREN, l.ch)
+		l.readChar()
+	case '!':
+		tok = newToken(token.EXACLAMATION, l.ch)
+		l.readChar()
 	default:
 		if isDigit(l.ch) {
 			if l.peekChar() == '.' {

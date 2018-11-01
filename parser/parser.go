@@ -52,31 +52,18 @@ func (p *Parser) parseStatement() interface{} {
 		return p.parseHeaderStatement()
 	case token.HEADER5:
 		return p.parseHeaderStatement()
-	case token.SENTENCE:
-		return p.parseParagraph()
 	case token.OLIST:
 		return p.parseOrderedlist()
 	case token.DASH:
 		return p.parseUnorderedlist()
 	default:
-		return nil
+		return p.parseParagraph()
 	}
 }
 
 func (p *Parser) parseHeaderStatement() *ast.HeaderStatement {
 	stmt := &ast.HeaderStatement{Token: p.curToken}
-	OSentence := &ast.SentenceOneline{}
-	for !p.expectPeek(token.NEWLINE) {
-		p.nextToken()
-		switch p.curToken.Type {
-		case token.SENTENCE:
-			chunk := &ast.NormalChunk{Token: p.curToken}
-			OSentence.Chunks = append(OSentence.Chunks, chunk)
-		case token.BOLD:
-			sentence := p.parseBold()
-			OSentence.Chunks = append(OSentence.Chunks, sentence)
-		}
-	}
+	OSentence := p.parseOneline()
 	stmt.Sentence = OSentence
 	p.nextToken()
 
@@ -104,52 +91,121 @@ func (p *Parser) parseOrderedlist() *ast.OrderedList {
 func (p *Parser) parseParagraph() *ast.Paragraph {
 	stmt := &ast.Paragraph{}
 
-	for p.curToken.Type == token.SENTENCE {
+	for p.iftokenissentence(p.curToken.Type) {
 		stmt.Sentences = append(stmt.Sentences, p.parseOneline())
 	}
 
 	return stmt
 }
 
-func (p *Parser) parseOneline() *ast.SentenceOneline {
-	stmt := &ast.SentenceOneline{}
-	chunk := &ast.BoldChunk{Token: p.curToken}
-	stmt.Chunks = append(stmt.Chunks, chunk)
+func (p *Parser) parseOneline() ast.SentenceOneline {
+	stmt := ast.SentenceOneline{}
 
-	for !p.expectPeek(token.NEWLINE) {
-		p.nextToken()
+	for {
+
 		switch p.curToken.Type {
 		case token.SENTENCE:
-			chunk := &ast.BoldChunk{Token: p.curToken}
+			chunk := ast.Chunk{Token: p.curToken, Kind: "normal"}
 			stmt.Chunks = append(stmt.Chunks, chunk)
 		case token.BOLD:
-			chunk := p.parseBold()
+			p.nextToken()
+			chunk := ast.Chunk{Token: p.curToken, Kind: "bold"}
 			stmt.Chunks = append(stmt.Chunks, chunk)
+			p.nextToken()
+			if p.curToken.Type != token.BOLD {
+				log.Fatalf("error")
+			}
+		case token.TICK:
+			p.nextToken()
+			chunk := ast.Chunk{Token: p.curToken, Kind: "code"}
+			stmt.Chunks = append(stmt.Chunks, chunk)
+			p.nextToken()
+			if p.curToken.Type != token.TICK {
+				log.Fatalf("error")
+			}
+		case token.EXACLAMATION:
+			p.nextToken()
+			if p.curToken.Type != token.LSQUARE {
+				log.Fatalf("error")
+			}
+
+			links := ast.Links{}
+			p.nextToken()
+			if p.curToken.Type != token.SENTENCE {
+				log.Fatalf("error")
+			}
+
+			links.Name = p.curToken.Literal
+
+			p.nextToken()
+			if p.curToken.Type != token.RSQUARE {
+				log.Fatalf("error")
+			}
+
+			p.nextToken()
+			if p.curToken.Type != token.LPAREN {
+				log.Fatalf("error")
+			}
+
+			p.nextToken()
+			if p.curToken.Type != token.SENTENCE {
+				log.Fatalf("error")
+			}
+
+			links.Url = p.curToken.Literal
+
+			p.nextToken()
+			if p.curToken.Type != token.RPAREN {
+				log.Fatalf("error")
+			}
+
+			chunk := ast.Chunk{Kind: "image", Links: links}
+			stmt.Chunks = append(stmt.Chunks, chunk)
+		case token.LSQUARE:
+			links := ast.Links{}
+			p.nextToken()
+			if p.curToken.Type != token.SENTENCE {
+				log.Fatalf("error")
+			}
+
+			links.Name = p.curToken.Literal
+
+			p.nextToken()
+			if p.curToken.Type != token.RSQUARE {
+				log.Fatalf("error")
+			}
+
+			p.nextToken()
+			if p.curToken.Type != token.LPAREN {
+				log.Fatalf("error")
+			}
+
+			p.nextToken()
+			if p.curToken.Type != token.SENTENCE {
+				log.Fatalf("error")
+			}
+
+			links.Url = p.curToken.Literal
+
+			p.nextToken()
+			if p.curToken.Type != token.RPAREN {
+				log.Fatalf("error")
+			}
+
+			chunk := ast.Chunk{Kind: "link", Links: links}
+			stmt.Chunks = append(stmt.Chunks, chunk)
+
+		}
+
+		if p.expectPeek(token.NEWLINE) {
+			break
+		}
+		if p.expectPeek(token.EOF) {
+			break
 		}
 	}
-
 	p.nextToken()
-
 	return stmt
-
-}
-
-func (p *Parser) parseBold() *ast.BoldChunk {
-	bold := &ast.BoldChunk{Token: p.curToken}
-
-	if !p.expectPeek(token.SENTENCE) {
-		log.Fatal("syntax error")
-	}
-
-	chunk := &ast.NormalChunk{Token: p.curToken}
-
-	bold.Chunk = chunk
-
-	if !p.expectPeek(token.BOLD) {
-		log.Fatal("syntax error")
-	}
-
-	return bold
 }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
@@ -163,4 +219,12 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
+}
+
+func (p *Parser) iftokenissentence(tokentype token.TokenType) bool {
+	if tokentype == token.SENTENCE || tokentype == token.TICK || tokentype == token.BOLD || tokentype == token.LSQUARE || tokentype == token.EXACLAMATION {
+		return true
+	} else {
+		return false
+	}
 }

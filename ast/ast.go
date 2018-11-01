@@ -6,22 +6,18 @@ type OnelineSentence interface {
 	onelinesentence()
 }
 
-type Chunk interface {
-	chunk()
-}
-
 type Program struct {
 	Statements []interface{}
 }
 
 type HeaderStatement struct {
 	Token    token.Token
-	Sentence OnelineSentence
+	Sentence SentenceOneline
 }
 
 type Paragraph struct {
 	Token     token.Token
-	Sentences []OnelineSentence
+	Sentences []SentenceOneline
 }
 
 type SentenceOneline struct {
@@ -30,25 +26,21 @@ type SentenceOneline struct {
 
 func (o *SentenceOneline) onelinesentence() {}
 
-type BoldChunk struct {
+type Chunk struct {
 	Token token.Token
-	Chunk Chunk
-}
-
-func (b *BoldChunk) chunk() {
-}
-
-type NormalChunk struct {
-	Token token.Token
-}
-
-func (n *NormalChunk) chunk() {
+	Kind  string
+	Links Links
 }
 
 type OrderedList struct {
-	Sentences []OnelineSentence
+	Sentences []SentenceOneline
 }
 
 type UnOrderedList struct {
-	Sentences []OnelineSentence
+	Sentences []SentenceOneline
+}
+
+type Links struct {
+	Name string
+	Url  string
 }
